@@ -1,6 +1,8 @@
 package com.example.exercisesstreamapi;
 
 
+import models.Order;
+import models.Product;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +12,14 @@ import lombok.extern.slf4j.Slf4j;
 import repos.CustomerRepo;
 import repos.OrderRepo;
 import repos.ProductRepo;
+
+import java.util.DoubleSummaryStatistics;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BiPredicate;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -34,6 +44,14 @@ public class StreamApiTest {
 	@Test
 	@DisplayName("Obtain a list of product with category = \"Books\" and price > 100 (using Predicate chaining for filter)")
 	public void exercise1a() {
+
+		Predicate<Product> categoryFilter = p -> p.getCategory().equalsIgnoreCase("Books");
+		Predicate<Product> priceFilter = p -> p.getPrice() > 100;
+
+		List<Product> result = productRepo.findAll()
+				.stream()
+				.filter(product -> categoryFilter.and(priceFilter).test(product))
+				.toList();
 
 	}
 
@@ -102,7 +120,11 @@ public class StreamApiTest {
 	@Test
 	@DisplayName("Obtain statistics summary of all products belong to \"Books\" category")
 	public void exercise10() {
-
+		DoubleSummaryStatistics summary = productRepo.findAll()
+				.stream()
+				.filter(p -> p.getCategory().equalsIgnoreCase("Books"))
+				.mapToDouble(Product::getPrice)
+				.summaryStatistics();
 
 	}
 
@@ -127,6 +149,16 @@ public class StreamApiTest {
 	@Test
 	@DisplayName("Obtain a data map with order and its total price")
 	public void exercise13() {
+
+		Map<Order, Double> result = orderRepo.findAll()
+				.stream()
+				.collect(Collectors.toMap(
+						Function.identity(),
+						order -> order.getProducts()
+								.stream()
+								.mapToDouble(Product::getPrice)
+								.sum()
+				));
 
 	}
 
